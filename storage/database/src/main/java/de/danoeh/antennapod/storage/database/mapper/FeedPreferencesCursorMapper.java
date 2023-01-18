@@ -30,7 +30,6 @@ public abstract class FeedPreferencesCursorMapper {
         int indexIncludeFilter = cursor.getColumnIndexOrThrow(PodDBAdapter.KEY_INCLUDE_FILTER);
         int indexExcludeFilter = cursor.getColumnIndexOrThrow(PodDBAdapter.KEY_EXCLUDE_FILTER);
         int indexMinimalDurationFilter = cursor.getColumnIndexOrThrow(PodDBAdapter.KEY_MINIMAL_DURATION_FILTER);
-        int indexMarkExcludedAsPlayed = cursor.getColumnIndexOrThrow(PodDBAdapter.KEY_MARK_EXCLUDED_AS_PLAYED);
         int indexFeedPlaybackSpeed = cursor.getColumnIndexOrThrow(PodDBAdapter.KEY_FEED_PLAYBACK_SPEED);
         int indexAutoSkipIntro = cursor.getColumnIndexOrThrow(PodDBAdapter.KEY_FEED_SKIP_INTRO);
         int indexAutoSkipEnding = cursor.getColumnIndexOrThrow(PodDBAdapter.KEY_FEED_SKIP_ENDING);
@@ -50,7 +49,6 @@ public abstract class FeedPreferencesCursorMapper {
         String includeFilter = cursor.getString(indexIncludeFilter);
         String excludeFilter = cursor.getString(indexExcludeFilter);
         int minimalDurationFilter = cursor.getInt(indexMinimalDurationFilter);
-        boolean markExcludedAsPlayed = cursor.getInt(indexMarkExcludedAsPlayed) > 0;
         float feedPlaybackSpeed = cursor.getFloat(indexFeedPlaybackSpeed);
         int feedAutoSkipIntro = cursor.getInt(indexAutoSkipIntro);
         int feedAutoSkipEnding = cursor.getInt(indexAutoSkipEnding);
@@ -66,7 +64,7 @@ public abstract class FeedPreferencesCursorMapper {
                 volumeAdaptionSetting,
                 username,
                 password,
-                new FeedFilter(includeFilter, excludeFilter, minimalDurationFilter, markExcludedAsPlayed),
+                new FeedFilter(includeFilter, excludeFilter, minimalDurationFilter),
                 feedPlaybackSpeed,
                 feedAutoSkipIntro,
                 feedAutoSkipEnding,

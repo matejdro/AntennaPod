@@ -35,11 +35,11 @@ public class FeedFilter implements Serializable {
     }
 
     public FeedFilter(String includeFilter, String excludeFilter, int minimalDuration) {
-        this(includeFilter, excludeFilter, minimalDuration, false);
+        this(includeFilter, excludeFilter, minimalDuration, true);
     }
 
     public FeedFilter(String includeFilter, String excludeFilter) {
-        this(includeFilter, excludeFilter, -1, false);
+        this(includeFilter, excludeFilter, -1, true);
     }
 
     /**
