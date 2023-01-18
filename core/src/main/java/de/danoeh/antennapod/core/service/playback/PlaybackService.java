@@ -1227,6 +1227,14 @@ public class PlaybackService extends MediaBrowserServiceCompat {
                 ).build()
         );
 
+        if (getPlayable() != null && getPlayable().getChapters() != null) {
+            sessionState.addCustomAction(
+                new PlaybackStateCompat.CustomAction.Builder(
+                    CUSTOM_ACTION_NEXT_CHAPTER,
+                    getString(R.string.next_chapter), R.drawable.ic_notification_next_chapter)
+                    .build());
+        }
+
         WearMediaSession.mediaSessionSetExtraForWear(mediaSession);
 
         mediaSession.setPlaybackState(sessionState.build());
