@@ -213,6 +213,7 @@
     <string name="stream_label">Stream</string>
     <string name="delete_label">Delete</string>
     <string name="delete_failed">Unable to delete file. Rebooting the device could help.</string>
+    <string name="delete_local_failed">Unable to delete local file. You may need use re-connect local feed option.</string>
     <string name="delete_episode_label">Delete episode</string>
     <plurals name="deleted_multi_episode_batch_label">
         <item quantity="one">1 downloaded episode deleted.</item>
@@ -397,6 +398,8 @@
     <string name="pref_followQueue_sum">Jump to next queue item when playback completes</string>
     <string name="pref_auto_delete_sum">Delete episode when playback completes</string>
     <string name="pref_auto_delete_title">Auto delete</string>
+    <string name="pref_auto_local_delete_sum">Include local folder feeds in Auto Delete functionality</string>
+    <string name="pref_auto_local_delete_title">Auto Delete from local folder feeds</string>
     <string name="pref_smart_mark_as_played_sum">Mark episodes as played even if less than a certain amount of seconds of playing time is still left</string>
     <string name="pref_smart_mark_as_played_title">Smart mark as played</string>
     <string name="pref_skip_keeps_episodes_sum">Keep episodes when they are skipped</string>

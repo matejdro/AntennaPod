@@ -15,7 +15,7 @@ import com.google.android.material.snackbar.Snackbar;
 import de.danoeh.antennapod.R;
 import de.danoeh.antennapod.activity.MainActivity;
 import de.danoeh.antennapod.core.preferences.PlaybackPreferences;
-import de.danoeh.antennapod.storage.preferences.UserPreferences;
+import de.danoeh.antennapod.core.util.FeedUtil;
 import de.danoeh.antennapod.core.receiver.MediaButtonReceiver;
 import de.danoeh.antennapod.core.service.playback.PlaybackServiceInterface;
 import de.danoeh.antennapod.core.storage.DBWriter;
@@ -56,6 +56,7 @@ public class FeedItemMenuHandler {
         final boolean isPlaying = hasMedia && PlaybackStatus.isPlaying(selectedItem.getMedia());
         final boolean isInQueue = selectedItem.isTagged(FeedItem.TAG_QUEUE);
         final boolean fileDownloaded = hasMedia && selectedItem.getMedia().fileExists();
+        final boolean isLocalFile = hasMedia && selectedItem.getFeed().isLocalFeed();
         final boolean isFavorite = selectedItem.isTagged(FeedItem.TAG_FAVORITE);
 
         setItemVisibility(menu, R.id.skip_episode_item, isPlaying);
@@ -80,7 +81,7 @@ public class FeedItemMenuHandler {
 
         setItemVisibility(menu, R.id.add_to_favorites_item, !isFavorite);
         setItemVisibility(menu, R.id.remove_from_favorites_item, isFavorite);
-        setItemVisibility(menu, R.id.remove_item, fileDownloaded);
+        setItemVisibility(menu, R.id.remove_item, fileDownloaded || isLocalFile);
         return true;
     }
 
@@ -225,7 +226,8 @@ public class FeedItemMenuHandler {
         final Handler h = new Handler(fragment.requireContext().getMainLooper());
         final Runnable r = () -> {
             FeedMedia media = item.getMedia();
-            if (media != null && FeedItemUtil.hasAlmostEnded(media) && UserPreferences.isAutoDelete()) {
+            boolean shouldAutoDelete = FeedUtil.shouldAutoDeleteItemsOnThatFeed(item.getFeed());
+            if (media != null && FeedItemUtil.hasAlmostEnded(media) && shouldAutoDelete) {
                 DBWriter.deleteFeedMediaOfItem(fragment.requireContext(), media.getId());
             }
         };
