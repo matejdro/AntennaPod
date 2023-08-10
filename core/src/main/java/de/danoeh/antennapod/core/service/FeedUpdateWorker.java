@@ -6,11 +6,16 @@ import android.util.Log;
 import androidx.annotation.NonNull;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
+import androidx.work.ForegroundInfo;
 import androidx.work.WorkManager;
 import androidx.work.Worker;
 import androidx.work.WorkerParameters;
+import androidx.work.impl.utils.futures.SettableFuture;
+
 import com.annimon.stream.Collectors;
 import com.annimon.stream.Stream;
+import com.google.common.util.concurrent.ListenableFuture;
+
 import de.danoeh.antennapod.core.ClientConfigurator;
 import de.danoeh.antennapod.core.R;
 import de.danoeh.antennapod.core.feed.LocalFeedUpdater;
@@ -179,5 +184,14 @@ public class FeedUpdateWorker extends Worker {
         } else if (feedSyncTask.getRedirectUrl() != null) {
             DBWriter.updateFeedDownloadURL(request.getSource(), feedSyncTask.getRedirectUrl());
         }
+    }
+
+    @Override
+    public ListenableFuture<ForegroundInfo> getForegroundInfoAsync() {
+        Notification notification = createNotification(DBReader.getFeedList());
+        ForegroundInfo foregroundInfo = new ForegroundInfo(99999, notification);
+        SettableFuture<ForegroundInfo> future = SettableFuture.create();
+        future.set(foregroundInfo);
+        return future;
     }
 }
