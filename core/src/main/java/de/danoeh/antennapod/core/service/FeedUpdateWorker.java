@@ -39,6 +39,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 public class FeedUpdateWorker extends Worker {
     private static final String TAG = "FeedUpdateWorker";
@@ -88,7 +89,17 @@ public class FeedUpdateWorker extends Worker {
             refreshFeeds(toUpdate, true);
         }
         notificationManager.cancel(R.id.notification_updating_feeds);
-        DBTasks.autodownloadUndownloadedItems(getApplicationContext());
+        try {
+            DBTasks.autodownloadUndownloadedItems(getApplicationContext()).get();
+        } catch (ExecutionException e) {
+            Log.e(TAG, "Failed to execute downloader");
+            e.printStackTrace();
+            return Result.retry();
+        } catch (InterruptedException e) {
+            Log.e(TAG, "Failed to execute downloader");
+            e.printStackTrace();
+            return Result.retry();
+        }
         return Result.success();
     }
 
