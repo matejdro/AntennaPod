@@ -15,6 +15,7 @@ import de.danoeh.antennapod.model.feed.FeedItemFilter;
 import de.danoeh.antennapod.model.feed.FeedPreferences;
 import de.danoeh.antennapod.net.download.serviceinterface.DownloadServiceInterface;
 import de.danoeh.antennapod.storage.database.DBReader;
+import de.danoeh.antennapod.storage.database.DBWriter;
 import de.danoeh.antennapod.storage.preferences.UserPreferences;
 import de.danoeh.antennapod.net.common.NetworkUtils;
 
@@ -32,7 +33,7 @@ public class AutomaticDownloadAlgorithm {
      * 3. There is free space in the episode cache
      * This method is executed on an internal single thread executor.
      *
-     * @param context  Used for accessing the DB.
+     * @param context Used for accessing the DB.
      * @return A Runnable that will be submitted to an ExecutorService.
      */
     public Runnable autoDownloadUndownloadedItems(final Context context) {
@@ -54,6 +55,8 @@ public class AutomaticDownloadAlgorithm {
                 final List<FeedItem> newItems = DBReader.getAutoDownloadCandidates(
                         globalAutoDownloadEnabled, autoDownloadQueueEnabled);
                 final List<FeedItem> candidates = new ArrayList<>();
+                List<FeedItem> markAsPlayedCandidates;
+                markAsPlayedCandidates = new ArrayList<>();
 
                 for (FeedItem newItem : newItems) {
                     FeedPreferences feedPrefs = newItem.getFeed().getPreferences();
@@ -62,6 +65,8 @@ public class AutomaticDownloadAlgorithm {
                             && feedPrefs.getFilter().shouldAutoDownload(newItem));
                     if (shouldAdd) {
                         candidates.add(newItem);
+                    } else {
+                        markAsPlayedCandidates.add(newItem);
                     }
                 }
 
@@ -101,6 +106,8 @@ public class AutomaticDownloadAlgorithm {
                         DownloadServiceInterface.get().download(context, episode);
                     }
                 }
+
+                DBWriter.markItemsPlayed(FeedItem.PLAYED, true, markAsPlayedCandidates);
             }
         };
     }
