@@ -16,6 +16,7 @@ import de.danoeh.antennapod.model.feed.FeedItem;
 import de.danoeh.antennapod.model.feed.FeedPreferences;
 import de.danoeh.antennapod.net.download.serviceinterface.DownloadServiceInterface;
 import de.danoeh.antennapod.storage.database.DBReader;
+import de.danoeh.antennapod.storage.database.DBWriter;
 import de.danoeh.antennapod.storage.preferences.UserPreferences;
 import de.danoeh.antennapod.net.common.NetworkUtils;
 
@@ -53,12 +54,18 @@ public class AutomaticDownloadAlgorithm {
                 final List<FeedItem> newItems = DBReader.getEpisodes(0, Integer.MAX_VALUE,
                         new FeedItemFilter(FeedItemFilter.NEW), SortOrder.DATE_NEW_OLD);
                 final List<FeedItem> candidates = new ArrayList<>();
+                List<FeedItem> markAsPlayedCandidates;
+                markAsPlayedCandidates = new ArrayList<>();
+
                 for (FeedItem newItem : newItems) {
                     FeedPreferences feedPrefs = newItem.getFeed().getPreferences();
                     if (feedPrefs.isAutoDownload(UserPreferences.isEnableAutodownloadGlobal())
-                            && !candidates.contains(newItem)
-                            && feedPrefs.getFilter().shouldAutoDownload(newItem)) {
-                        candidates.add(newItem);
+                            && !candidates.contains(newItem)) {
+                        if (feedPrefs.getFilter().shouldAutoDownload(newItem)) {
+                            candidates.add(newItem);
+                        } else {
+                            markAsPlayedCandidates.add(newItem);
+                        }
                     }
                 }
 
@@ -107,6 +114,8 @@ public class AutomaticDownloadAlgorithm {
                         DownloadServiceInterface.get().download(context, episode);
                     }
                 }
+
+                DBWriter.markItemsPlayed(FeedItem.PLAYED, true, markAsPlayedCandidates);
             }
         };
     }
