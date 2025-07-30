@@ -9,19 +9,19 @@ import android.view.ViewGroup;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
-import de.danoeh.antennapod.storage.database.DBReader;
-import de.danoeh.antennapod.storage.database.StatisticsItem;
-import de.danoeh.antennapod.ui.common.Converter;
-import de.danoeh.antennapod.ui.common.DateFormatter;
-import de.danoeh.antennapod.storage.database.ReleaseScheduleGuesser;
 import de.danoeh.antennapod.model.feed.FeedItem;
 import de.danoeh.antennapod.model.feed.FeedItemFilter;
 import de.danoeh.antennapod.model.feed.SortOrder;
+import de.danoeh.antennapod.storage.database.DBReader;
+import de.danoeh.antennapod.storage.database.ReleaseScheduleGuesser;
+import de.danoeh.antennapod.storage.database.StatisticsItem;
+import de.danoeh.antennapod.ui.common.Converter;
+import de.danoeh.antennapod.ui.common.DateFormatter;
 import de.danoeh.antennapod.ui.common.ThemeUtils;
 import de.danoeh.antennapod.ui.statistics.R;
 import de.danoeh.antennapod.ui.statistics.databinding.FeedStatisticsBinding;
-import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
+import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.disposables.Disposable;
 import io.reactivex.rxjava3.schedulers.Schedulers;
 
@@ -73,7 +73,7 @@ public class FeedStatisticsFragment extends Fragment {
 
     private void loadStatistics() {
         disposable =
-                Observable.fromCallable(() -> {
+                Maybe.fromCallable(() -> {
                     DBReader.StatisticsResult statisticsData = DBReader.getStatistics(true, 0, Long.MAX_VALUE);
                     Collections.sort(statisticsData.feedTime, (item1, item2) ->
                             Long.compare(item2.timePlayed, item1.timePlayed));
