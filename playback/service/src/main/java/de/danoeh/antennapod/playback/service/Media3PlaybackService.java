@@ -1,5 +1,7 @@
 package de.danoeh.antennapod.playback.service;
-
+import android.media.MediaRoute2Info;
+import android.media.MediaRouter2;
+import android.media.RouteDiscoveryPreference;
 import android.media.audiofx.LoudnessEnhancer;
 import android.os.Bundle;
 import android.util.Log;
@@ -7,6 +9,7 @@ import android.webkit.URLUtil;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.OptIn;
+import androidx.core.content.ContextCompat;
 import androidx.core.util.Pair;
 import androidx.media3.common.ForwardingPlayer;
 import androidx.media3.common.MediaItem;
@@ -70,6 +73,7 @@ import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
 
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.List;
@@ -92,6 +96,8 @@ public class Media3PlaybackService extends MediaLibraryService {
     @Nullable
     private LoudnessEnhancer loudnessEnhancer = null;
     private float volumeAdaptionFactor = 1.0f;
+
+    private MediaRouter2 mediaRouter;
 
     @UnstableApi
     @Override
@@ -179,6 +185,16 @@ public class Media3PlaybackService extends MediaLibraryService {
         mediaSession = new MediaLibraryService.MediaLibrarySession.Builder(this, player, sessionCallback)
                 .setSessionActivity(new MainActivityStarter(this).withOpenPlayer().getPendingIntent())
                 .build();
+        RouteDiscoveryPreference preference = new RouteDiscoveryPreference.Builder(
+                Arrays.asList(
+                        MediaRoute2Info.FEATURE_LIVE_AUDIO,
+                        MediaRoute2Info.FEATURE_LIVE_VIDEO
+                ),
+                false
+        ).build();
+
+        this.mediaRouter = MediaRouter2.getInstance(this);
+        mediaRouter.registerRouteCallback(ContextCompat.getMainExecutor(this), mediaRouterCallback, preference);
     }
 
     MediaLibrarySessionCallback sessionCallback = new MediaLibrarySessionCallback(this) {
@@ -186,9 +202,9 @@ public class Media3PlaybackService extends MediaLibraryService {
         @NonNull
         @UnstableApi
         public ListenableFuture<SessionResult> onCustomCommand(@NonNull MediaSession session,
-                @NonNull MediaSession.ControllerInfo controller,
-                @NonNull SessionCommand customCommand,
-                @NonNull Bundle args) {
+                                                               @NonNull MediaSession.ControllerInfo controller,
+                                                               @NonNull SessionCommand customCommand,
+                                                               @NonNull Bundle args) {
             if (customCommand.customAction.equals(SESSION_COMMAND_PLAYBACK_SPEED.customAction)) {
                 setNextPlaybackSpeed();
                 return Futures.immediateFuture(new SessionResult(SessionResult.RESULT_SUCCESS));
@@ -363,6 +379,7 @@ public class Media3PlaybackService extends MediaLibraryService {
         if (mediaSession != null) {
             mediaSession.release();
         }
+        mediaRouter.unregisterRouteCallback(mediaRouterCallback);
         super.onDestroy();
     }
 
@@ -424,43 +441,43 @@ public class Media3PlaybackService extends MediaLibraryService {
                     mediaLoaderDisposable.dispose();
                 }
                 mediaLoaderDisposable = Single.fromCallable(() -> {
-                    FeedMedia media = DBReader.getFeedMedia(mediaId);
-                    ChapterUtils.loadChapters(media, this, false);
-                    return media;
-                })
+                            FeedMedia media = DBReader.getFeedMedia(mediaId);
+                            ChapterUtils.loadChapters(media, this, false);
+                            return media;
+                        })
                         .subscribeOn(Schedulers.io())
                         .observeOn(AndroidSchedulers.mainThread())
                         .subscribe(media -> {
-                            currentPlayable = media;
-                            if (player == null) {
-                                return;
-                            }
-                            if (needsStreaming(media) && !NetworkUtils.isStreamingAllowed()
-                                    && !allowStreamingThisTime) {
-                                showStreamingConfirmation(media);
-                                return;
-                            }
-                            allowStreamingThisTime = false;
-                            currentPlayable.setPosition((int) player.getCurrentPosition());
-                            currentPlayable.onPlaybackStart();
-                            if (currentPlayable.getItem() != null
-                                    && !currentPlayable.getItem().isTagged(FeedItem.TAG_QUEUE)) {
-                                DBWriter.addQueueItem(this, currentPlayable.getItem());
-                            }
-                            float speed = PlaybackSpeedUtils.getCurrentPlaybackSpeed(currentPlayable);
-                            player.setPlaybackSpeed(speed);
-                            boolean enabled = PlaybackSpeedUtils.getCurrentSkipSilencePreference(
-                                    currentPlayable) == FeedPreferences.SkipSilence.AGGRESSIVE;
-                            PlaybackPreferences.setCurrentlyPlayingTemporarySkipSilence(enabled);
-                            exoPlayer.setSkipSilenceEnabled(enabled);
-                            if (currentPlayable.getItem() != null
-                                    && currentPlayable.getItem().getFeed() != null) {
-                                volumeAdaptionFactor = currentPlayable.getItem().getFeed()
-                                        .getPreferences().getVolumeAdaptionSetting().getAdaptionFactor();
-                                applyVolumeAdaption(1.0f);
-                            }
-                            updatePlaybackPreferences();
-                        },
+                                    currentPlayable = media;
+                                    if (player == null) {
+                                        return;
+                                    }
+                                    if (needsStreaming(media) && !NetworkUtils.isStreamingAllowed()
+                                            && !allowStreamingThisTime) {
+                                        showStreamingConfirmation(media);
+                                        return;
+                                    }
+                                    allowStreamingThisTime = false;
+                                    currentPlayable.setPosition((int) player.getCurrentPosition());
+                                    currentPlayable.onPlaybackStart();
+                                    if (currentPlayable.getItem() != null
+                                            && !currentPlayable.getItem().isTagged(FeedItem.TAG_QUEUE)) {
+                                        DBWriter.addQueueItem(this, currentPlayable.getItem());
+                                    }
+                                    float speed = PlaybackSpeedUtils.getCurrentPlaybackSpeed(currentPlayable);
+                                    player.setPlaybackSpeed(speed);
+                                    boolean enabled = PlaybackSpeedUtils.getCurrentSkipSilencePreference(
+                                            currentPlayable) == FeedPreferences.SkipSilence.AGGRESSIVE;
+                                    PlaybackPreferences.setCurrentlyPlayingTemporarySkipSilence(enabled);
+                                    exoPlayer.setSkipSilenceEnabled(enabled);
+                                    if (currentPlayable.getItem() != null
+                                            && currentPlayable.getItem().getFeed() != null) {
+                                        volumeAdaptionFactor = currentPlayable.getItem().getFeed()
+                                                .getPreferences().getVolumeAdaptionSetting().getAdaptionFactor();
+                                        applyVolumeAdaption(1.0f);
+                                    }
+                                    updatePlaybackPreferences();
+                                },
                                 error -> Log.e(TAG, "Failed to load current media", error));
 
             }
@@ -581,7 +598,7 @@ public class Media3PlaybackService extends MediaLibraryService {
     private boolean shouldBlockForStreamingConfirmation() {
         return currentPlayable != null
                 && (player.getPlaybackState() == Player.STATE_READY
-                    || player.getPlaybackState() == Player.STATE_BUFFERING)
+                || player.getPlaybackState() == Player.STATE_BUFFERING)
                 && needsStreaming(currentPlayable)
                 && !NetworkUtils.isStreamingAllowed();
     }
@@ -636,12 +653,12 @@ public class Media3PlaybackService extends MediaLibraryService {
             return;
         }
         queueLoaderDisposable = Maybe.fromCallable(() -> {
-            FeedItem nextItem = DBReader.getNextInQueue(item);
-            if (nextItem != null && nextItem.getMedia() != null) {
-                return new Pair<>(nextItem.getMedia(), MediaItemAdapter.fromPlayable(Media3PlaybackService.this, nextItem.getMedia(), false));
-            }
-            return null;
-        })
+                    FeedItem nextItem = DBReader.getNextInQueue(item);
+                    if (nextItem != null && nextItem.getMedia() != null) {
+                        return new Pair<>(nextItem.getMedia(), MediaItemAdapter.fromPlayable(Media3PlaybackService.this, nextItem.getMedia(), false));
+                    }
+                    return null;
+                })
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(
@@ -792,4 +809,14 @@ public class Media3PlaybackService extends MediaLibraryService {
             }
         }
     }
+
+    private final MediaRouter2.RouteCallback mediaRouterCallback = new MediaRouter2.RouteCallback() {
+        @Override
+        public void onRoutesUpdated(@NonNull List<MediaRoute2Info> routes) {
+            float speed = PlaybackSpeedUtils.getCurrentPlaybackSpeed(currentPlayable);
+            System.out.println("routes updated 3 " + speed);
+            player.setPlaybackSpeed(speed);
+            EventBus.getDefault().post(new SpeedChangedEvent(speed));
+        }
+    };
 }

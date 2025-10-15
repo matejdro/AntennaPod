@@ -114,7 +114,8 @@ public abstract class PlaybackPreferences {
     }
 
     public static float getCurrentlyPlayingTemporaryPlaybackSpeed() {
-        return prefs.getFloat(PREF_CURRENTLY_PLAYING_TEMPORARY_PLAYBACK_SPEED, FeedPreferences.SPEED_USE_GLOBAL);
+        return FeedPreferences.SPEED_USE_GLOBAL;
+//        return prefs.getFloat(PREF_CURRENTLY_PLAYING_TEMPORARY_PLAYBACK_SPEED, FeedPreferences.SPEED_USE_GLOBAL);
     }
 
     public static FeedPreferences.SkipSilence getCurrentlyPlayingTemporarySkipSilence() {
@@ -153,9 +154,10 @@ public abstract class PlaybackPreferences {
     }
 
     public static void setCurrentlyPlayingTemporaryPlaybackSpeed(float speed) {
-        SharedPreferences.Editor editor = prefs.edit();
-        editor.putFloat(PREF_CURRENTLY_PLAYING_TEMPORARY_PLAYBACK_SPEED, speed);
-        editor.apply();
+        // Not sure what this does, we don't need temporary speed for now :)
+//        SharedPreferences.Editor editor = prefs.edit();
+//        editor.putFloat(PREF_CURRENTLY_PLAYING_TEMPORARY_PLAYBACK_SPEED, speed);
+//        editor.apply();
     }
 
     public static void setCurrentlyPlayingTemporarySkipSilence(boolean skipSilence) {
