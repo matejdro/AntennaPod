@@ -7,6 +7,7 @@ import android.media.RouteDiscoveryPreference;
 import android.media.audiofx.LoudnessEnhancer;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.webkit.URLUtil;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -24,6 +25,7 @@ import androidx.media3.exoplayer.ExoPlayer;
 import androidx.media3.session.DefaultMediaNotificationProvider;
 import androidx.media3.session.MediaLibraryService;
 import androidx.media3.session.MediaSession;
+import androidx.media3.session.MediaSessionAccessors;
 import androidx.media3.session.SessionCommand;
 import androidx.media3.session.SessionResult;
 import com.google.common.util.concurrent.Futures;
@@ -255,6 +257,21 @@ public class Media3PlaybackService extends MediaLibraryService {
         } catch (IllegalStateException e) {
             Log.e(TAG, "Unable to keep service running while casting", e);
         }
+    }
+
+    @Override
+    public int onStartCommand(@Nullable Intent intent, int flags, int startId) {
+        if (intent != null && "BUTTON_FROM_TASKER".equals(intent.getAction())) {
+            int key = intent.getIntExtra("BUTTON", 0);
+            intent.setAction(Intent.ACTION_MEDIA_BUTTON);
+            intent.putExtra(Intent.EXTRA_KEY_EVENT, new KeyEvent(100, 100, KeyEvent.ACTION_DOWN, key, 0));
+        } else if (intent != null && "androidx.media3.session.CUSTOM_NOTIFICATION_ACTION".equals(intent.getAction()) &&
+                intent.getData() == null &&
+                !getSessions().isEmpty()
+        ) {
+            intent.setData(MediaSessionAccessors.getUri(getSessions().get(0)));
+        }
+        return super.onStartCommand(intent, flags, startId);
     }
 
     MediaLibrarySessionCallback sessionCallback = new MediaLibrarySessionCallback(this) {
