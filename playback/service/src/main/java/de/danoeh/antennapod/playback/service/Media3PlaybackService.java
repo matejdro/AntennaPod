@@ -2,9 +2,11 @@ package de.danoeh.antennapod.playback.service;
 import android.media.MediaRoute2Info;
 import android.media.MediaRouter2;
 import android.media.RouteDiscoveryPreference;
+import android.content.Intent;
 import android.media.audiofx.LoudnessEnhancer;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.webkit.URLUtil;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -21,19 +23,20 @@ import androidx.media3.exoplayer.ExoPlayer;
 import androidx.media3.session.DefaultMediaNotificationProvider;
 import androidx.media3.session.MediaLibraryService;
 import androidx.media3.session.MediaSession;
+import androidx.media3.session.MediaSessionAccessors;
 import androidx.media3.session.SessionCommand;
 import androidx.media3.session.SessionResult;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import de.danoeh.antennapod.event.PlayerErrorEvent;
-import de.danoeh.antennapod.event.StreamingConfirmationEvent;
-import de.danoeh.antennapod.event.settings.VolumeAdaptionChangedEvent;
 import de.danoeh.antennapod.event.PlayerStatusEvent;
+import de.danoeh.antennapod.event.StreamingConfirmationEvent;
 import de.danoeh.antennapod.event.playback.BufferUpdateEvent;
 import de.danoeh.antennapod.event.playback.PlaybackPositionEvent;
 import de.danoeh.antennapod.event.playback.PlaybackServiceEvent;
 import de.danoeh.antennapod.event.playback.SleepTimerUpdatedEvent;
 import de.danoeh.antennapod.event.playback.SpeedChangedEvent;
+import de.danoeh.antennapod.event.settings.VolumeAdaptionChangedEvent;
 import de.danoeh.antennapod.model.feed.Chapter;
 import de.danoeh.antennapod.model.feed.FeedItem;
 import de.danoeh.antennapod.model.feed.FeedMedia;
@@ -45,13 +48,13 @@ import de.danoeh.antennapod.playback.base.MediaItemAdapter;
 import de.danoeh.antennapod.playback.base.PlayerStatus;
 import de.danoeh.antennapod.playback.base.RewindAfterPauseUtils;
 import de.danoeh.antennapod.playback.cast.CastPlayerWrapper;
+import de.danoeh.antennapod.playback.service.internal.ClockSleepTimer;
+import de.danoeh.antennapod.playback.service.internal.EpisodeSleepTimer;
 import de.danoeh.antennapod.playback.service.internal.ExoPlayerUtils;
 import de.danoeh.antennapod.playback.service.internal.MediaLibrarySessionCallback;
 import de.danoeh.antennapod.playback.service.internal.PlayableUtils;
 import de.danoeh.antennapod.playback.service.internal.SkipUtils;
 import de.danoeh.antennapod.playback.service.internal.SleepTimer;
-import de.danoeh.antennapod.playback.service.internal.ClockSleepTimer;
-import de.danoeh.antennapod.playback.service.internal.EpisodeSleepTimer;
 import de.danoeh.antennapod.storage.database.DBReader;
 import de.danoeh.antennapod.storage.database.DBWriter;
 import de.danoeh.antennapod.storage.preferences.PlaybackPreferences;
@@ -195,6 +198,21 @@ public class Media3PlaybackService extends MediaLibraryService {
 
         this.mediaRouter = MediaRouter2.getInstance(this);
         mediaRouter.registerRouteCallback(ContextCompat.getMainExecutor(this), mediaRouterCallback, preference);
+    }
+
+    @Override
+    public int onStartCommand(@Nullable Intent intent, int flags, int startId) {
+        if (intent != null && "BUTTON_FROM_TASKER".equals(intent.getAction())) {
+            int key = intent.getIntExtra("BUTTON", 0);
+            intent.setAction(Intent.ACTION_MEDIA_BUTTON);
+            intent.putExtra(Intent.EXTRA_KEY_EVENT, new KeyEvent(100, 100, KeyEvent.ACTION_DOWN, key, 0));
+        } else if (intent != null && "androidx.media3.session.CUSTOM_NOTIFICATION_ACTION".equals(intent.getAction()) &&
+                intent.getData() == null &&
+                !getSessions().isEmpty()
+        ) {
+            intent.setData(MediaSessionAccessors.getUri(getSessions().get(0)));
+        }
+        return super.onStartCommand(intent, flags, startId);
     }
 
     MediaLibrarySessionCallback sessionCallback = new MediaLibrarySessionCallback(this) {
