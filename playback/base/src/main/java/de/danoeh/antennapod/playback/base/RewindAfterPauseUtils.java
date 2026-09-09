@@ -24,6 +24,7 @@ public abstract class RewindAfterPauseUtils {
      * @return  new rewinded position for playback in milliseconds
      */
     public static int calculatePositionWithRewind(int currentPosition, long lastPlayedTimeStatistics) {
+        if (true) return currentPosition;
         if (currentPosition > 0 && lastPlayedTimeStatistics > 0) {
             long elapsedTime = System.currentTimeMillis() - lastPlayedTimeStatistics;
             long rewindTime = 0;
