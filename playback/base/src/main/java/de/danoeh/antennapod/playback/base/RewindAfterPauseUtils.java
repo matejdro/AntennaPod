@@ -1,5 +1,6 @@
 package de.danoeh.antennapod.playback.base;
 
+import java.util.Date;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -24,7 +25,9 @@ public abstract class RewindAfterPauseUtils {
      * @return  new rewinded position for playback in milliseconds
      */
     public static int calculatePositionWithRewind(int currentPosition, long lastPlayedTimeStatistics) {
+        System.out.println("calculate position with rewind " + currentPosition + " " + new Date(lastPlayedTimeStatistics));
         if (true) return currentPosition;
+        System.out.println("post return");
         if (currentPosition > 0 && lastPlayedTimeStatistics > 0) {
             long elapsedTime = System.currentTimeMillis() - lastPlayedTimeStatistics;
             long rewindTime = 0;

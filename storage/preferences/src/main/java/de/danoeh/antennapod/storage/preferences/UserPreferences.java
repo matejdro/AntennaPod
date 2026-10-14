@@ -476,7 +476,9 @@ public abstract class UserPreferences {
 
         try {
             String fallbackValue = prefs.getString(PREF_PLAYBACK_SPEED, "1.00");
-            return Float.parseFloat(prefs.getString(PREF_PLAYBACK_SPEED_PER_OUTPUT + filteredName, fallbackValue));
+            final float value = Float.parseFloat(prefs.getString(PREF_PLAYBACK_SPEED_PER_OUTPUT + filteredName, fallbackValue));
+            System.out.println("playback speed per output '" + filteredName + "' " + value + " " + fallbackValue);
+            return value;
         } catch (NumberFormatException e) {
             Log.e(TAG, Log.getStackTraceString(e));
             UserPreferences.setPlaybackSpeedPerOutput(mediaOutput, 1.0f);

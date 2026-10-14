@@ -279,6 +279,7 @@ public class Media3PlaybackService extends MediaLibraryService {
 
         this.mediaRouter = MediaRouter2.getInstance(this);
         mediaRouter.registerRouteCallback(ContextCompat.getMainExecutor(this), mediaRouterCallback, preference);
+        System.out.println("media router registered " + mediaRouterCallback);
     }
 
     @UnstableApi
@@ -532,6 +533,7 @@ public class Media3PlaybackService extends MediaLibraryService {
             mediaSession.release();
         }
         mediaRouter.unregisterRouteCallback(mediaRouterCallback);
+        System.out.println("media router unregistered");
         super.onDestroy();
     }
 
@@ -641,6 +643,7 @@ public class Media3PlaybackService extends MediaLibraryService {
         playedDurationCountedUntil = playbackStartPosition;
 
         float speed = PlaybackSpeedUtils.getCurrentPlaybackSpeed(currentPlayable);
+        System.out.println("switchToPlayable " + speed);
         player.setPlaybackSpeed(speed);
         boolean enabled = PlaybackSpeedUtils.getCurrentSkipSilencePreference(
                 currentPlayable) == FeedPreferences.SkipSilence.AGGRESSIVE;
